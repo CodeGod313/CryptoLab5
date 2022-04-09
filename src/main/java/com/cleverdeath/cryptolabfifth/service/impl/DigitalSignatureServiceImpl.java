@@ -33,17 +33,20 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
     @Override
     public List<BigInteger> generateSignature(String text, int q, int p, int g, int x) {
         Random random = new Random();
-        int k = random.nextInt(q) + 1;
-        HashService hashService = new HashServiceImpl();
-        BigInteger r = BigInteger.valueOf(g)
-                .pow(k)
-                .mod(BigInteger.valueOf(p))
-                .mod(BigInteger.valueOf(q));
-        BigInteger xMultiplyR = r.multiply(BigInteger.valueOf(x));
-        BigInteger s = hashService.generateHash(text)
-                .add(xMultiplyR)
-                .multiply(BigInteger.valueOf(k).pow(q - 2))
-                .mod(BigInteger.valueOf(q));
+        BigInteger r, s;
+        do {
+            int k = random.nextInt(q-1) + 1;
+            HashService hashService = new HashServiceImpl();
+            r = BigInteger.valueOf(g)
+                    .pow(k)
+                    .mod(BigInteger.valueOf(p))
+                    .mod(BigInteger.valueOf(q));
+            BigInteger xMultiplyR = r.multiply(BigInteger.valueOf(x));
+            s = hashService.generateHash(text)
+                    .add(xMultiplyR)
+                    .multiply(BigInteger.valueOf(k).pow(q - 2))
+                    .mod(BigInteger.valueOf(q));
+        } while (r.equals(BigInteger.valueOf(0)) || s.equals(BigInteger.valueOf(0)));
         List<BigInteger> signature = List.of(r, s);
         return signature;
     }
@@ -56,7 +59,9 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
         BigInteger r = new BigInteger(lines.get(lines.size() - 2));
         BigInteger s = new BigInteger(lines.get(lines.size() - 1));
         StringBuilder textWithoutSignature = new StringBuilder();
-        lines.forEach(textWithoutSignature::append);
+        for (int i = 0; i < lines.size() - 2; i++) {
+            textWithoutSignature.append(lines.get(i));
+        }
         BigInteger w = s
                 .pow(keys.get(0) - 2)
                 .mod(BigInteger.valueOf(keys.get(0)));
@@ -70,8 +75,8 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
         BigInteger v = BigInteger.valueOf(keys.get(2))
                 .pow(u1.intValue())
                 .multiply(BigInteger.valueOf(keys.get(4)).pow(u2.intValue()))
-                .mod(BigInteger.valueOf(1))
-                .mod(BigInteger.valueOf(0));
+                .mod(BigInteger.valueOf(keys.get(1)))
+                .mod(BigInteger.valueOf(keys.get(0)));
         return v.equals(r);
     }
 
@@ -81,23 +86,29 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
             generatePrimeNumbers();
         }
         Random random = new Random();
-        int randPrimeIndex = random.nextInt(11 - 4 + 1);
+        int randPrimeIndex = random.nextInt(11 - 4 + 1) + 4;
         int q = primeNumbers.get(randPrimeIndex);
         int indexP = randPrimeIndex + 1;
-        while ((primeNumbers.get(indexP) - 1) % q == 0) {
+        while ((primeNumbers.get(indexP) - 1) % q != 0 && indexP < primeNumbers.size()) {
             indexP++;
         }
         int p = primeNumbers.get(indexP);
-        int g = ((int) Math.pow(2, (p - 1) / q)) % p;
-        int x = random.nextInt(q);
-        int y = ((int) Math.pow(g, x)) % p;
+        int g = BigInteger.valueOf(2).pow((p - 1) / q).mod(BigInteger.valueOf(p)).intValue();
+        int x = random.nextInt(q-1) + 1;
+        int y = BigInteger.valueOf(g)
+                .pow(x)
+                .mod(BigInteger.valueOf(p))
+                .intValue();
         List<Integer> keys = List.of(q, p, g, x, y);
         return keys;
     }
 
 
     private void generatePrimeNumbers() {
-        List<Integer> sieve = new ArrayList<>(1000);
+        List<Integer> sieve = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) {
+            sieve.add(0);
+        }
         for (int i = 2; i * i < 1000; i++) {
             if (sieve.get(i) == 0) {
                 for (int j = i * i; j < 1000; j += i) {

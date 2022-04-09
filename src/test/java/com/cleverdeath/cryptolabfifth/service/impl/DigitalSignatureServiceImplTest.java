@@ -1,9 +1,12 @@
 package com.cleverdeath.cryptolabfifth.service.impl;
 
 import com.cleverdeath.cryptolabfifth.service.DigitalSignatureService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DigitalSignatureServiceImplTest {
@@ -20,15 +23,12 @@ class DigitalSignatureServiceImplTest {
     }
 
     @Test
-    void signTextFile() {
-        digitalSignatureService.
+    void signTextFileAndVerify() {
+        List<Integer> keys = digitalSignatureService.signTextFile(inputFilePath, outputFilePath);
+        Assertions.assertTrue(digitalSignatureService.verifySignature(keys, outputFilePath));
     }
 
     @Test
     void generateSignature() {
-    }
-
-    @Test
-    void verifySignature() {
     }
 }
