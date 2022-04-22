@@ -27,8 +27,4 @@ class DigitalSignatureServiceImplTest {
         List<Integer> keys = digitalSignatureService.signTextFile(inputFilePath, outputFilePath);
         Assertions.assertTrue(digitalSignatureService.verifySignature(keys, outputFilePath));
     }
-
-    @Test
-    void generateSignature() {
-    }
 }

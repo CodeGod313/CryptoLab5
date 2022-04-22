@@ -16,6 +16,8 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
 
     public static final String NEW_LINE = "\n";
     public static final List<Integer> primeNumbers = new ArrayList<>();
+    public static final int R_POSITION = 0;
+    public static final int S_POSITION = 1;
     private static boolean isGenerated = false;
 
     @Override
@@ -25,7 +27,7 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
         String text = fileProcessor.readStringFromFile(path).get();
         List<Integer> keys = generateKeys();
         List<BigInteger> signature = generateSignature(text, keys.get(0), keys.get(1), keys.get(2), keys.get(3));
-        String textWithSignature = text + NEW_LINE + signature.get(0) + NEW_LINE + signature.get(1);
+        String textWithSignature = text + NEW_LINE + signature.get(R_POSITION) + NEW_LINE + signature.get(S_POSITION);
         fileProcessor.writeStringToFile(textWithSignature, signedFilePath);
         return keys;
     }
@@ -35,7 +37,7 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
         Random random = new Random();
         BigInteger r, s;
         do {
-            int k = random.nextInt(q-1) + 1;
+            int k = random.nextInt(q - 1) + 1;
             HashService hashService = new HashServiceImpl();
             r = BigInteger.valueOf(g)
                     .pow(k)
@@ -89,12 +91,12 @@ public class DigitalSignatureServiceImpl implements DigitalSignatureService {
         int randPrimeIndex = random.nextInt(11 - 4 + 1) + 4;
         int q = primeNumbers.get(randPrimeIndex);
         int indexP = randPrimeIndex + 1;
-        while ((primeNumbers.get(indexP) - 1) % q != 0 && indexP < primeNumbers.size()) {
+        while ((primeNumbers.get(indexP) - 1) % q != 0) {
             indexP++;
         }
         int p = primeNumbers.get(indexP);
         int g = BigInteger.valueOf(2).pow((p - 1) / q).mod(BigInteger.valueOf(p)).intValue();
-        int x = random.nextInt(q-1) + 1;
+        int x = random.nextInt(q - 1) + 1;
         int y = BigInteger.valueOf(g)
                 .pow(x)
                 .mod(BigInteger.valueOf(p))
